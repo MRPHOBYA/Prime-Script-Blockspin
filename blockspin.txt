@@ -1,0 +1,693 @@
+-- ===== Services =====
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Camera = workspace.CurrentCamera
+local Player = Players.LocalPlayer
+
+-- ===== ScreenGui =====
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Hermano"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui
+
+-- ===== MainFrame =====
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0.42, 0, 0.78, 0)
+MainFrame.Position = UDim2.new(0.29, 0, 0.11, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
+
+local MainFrameGradient = Instance.new("UIGradient", MainFrame)
+MainFrameGradient.Rotation = 75
+MainFrameGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 65, 65)),
+    ColorSequenceKeypoint.new(0.45, Color3.fromRGB(180, 35, 35)),
+    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(22, 22, 28))
+})
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = Color3.fromRGB(255, 80, 80)
+MainStroke.Thickness = 1.8
+MainStroke.Transparency = 0.35
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- ===== Toggle Button =====
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "HermanoToggle"
+ToggleButton.Parent = ScreenGui
+ToggleButton.Size = UDim2.new(0, 130, 0, 52)
+ToggleButton.Position = UDim2.new(0.88, 0, 0.02, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+ToggleButton.Text = "OPEN"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 235, 235)
+ToggleButton.TextScaled = true
+ToggleButton.Font = Enum.Font.GothamBlack
+ToggleButton.AutoButtonColor = false
+
+local corner = Instance.new("UICorner", ToggleButton)
+corner.CornerRadius = UDim.new(0, 14)
+
+local gradient = Instance.new("UIGradient", ToggleButton)
+gradient.Rotation = 90
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 110, 110)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(130, 40, 40))
+})
+
+local stroke = Instance.new("UIStroke", ToggleButton)
+stroke.Color = Color3.fromRGB(255, 160, 160)
+stroke.Thickness = 2
+stroke.Transparency = 0.35
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+local normalSize  = ToggleButton.Size
+local hoverSize   = UDim2.new(0, 138, 0, 56)
+local normalColor = ToggleButton.BackgroundColor3
+local hoverColor  = Color3.fromRGB(38, 38, 44)
+
+local hoverTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+ToggleButton.MouseEnter:Connect(function()
+    TweenService:Create(ToggleButton, hoverTweenInfo, {Size = hoverSize, BackgroundColor3 = hoverColor}):Play()
+end)
+
+ToggleButton.MouseLeave:Connect(function()
+    TweenService:Create(ToggleButton, hoverTweenInfo, {Size = normalSize, BackgroundColor3 = normalColor}):Play()
+end)
+
+-- ===== Stats Panel =====
+local StatsPanel = Instance.new("Frame", ScreenGui)
+StatsPanel.Size = UDim2.new(0, 280, 0, 52)
+StatsPanel.Position = UDim2.new(1, -300, 1, -68)
+StatsPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+StatsPanel.Visible = false
+Instance.new("UICorner", StatsPanel).CornerRadius = UDim.new(0, 14)
+
+local panelStroke = Instance.new("UIStroke", StatsPanel)
+panelStroke.Color = Color3.fromRGB(255, 90, 90)
+panelStroke.Thickness = 2
+panelStroke.Transparency = 0.3
+
+local FPSLabel = Instance.new("TextLabel", StatsPanel)
+FPSLabel.Size = UDim2.new(0.33, 0, 1, 0)
+FPSLabel.BackgroundTransparency = 1
+FPSLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+FPSLabel.TextScaled = true
+FPSLabel.Font = Enum.Font.GothamBlack
+FPSLabel.Text = "⚡ FPS: 0"
+
+local TimeLabel = Instance.new("TextLabel", StatsPanel)
+TimeLabel.Size = UDim2.new(0.34, 0, 1, 0)
+TimeLabel.Position = UDim2.new(0.33, 0, 0, 0)
+TimeLabel.BackgroundTransparency = 1
+TimeLabel.TextColor3 = Color3.fromRGB(220, 220, 240)
+TimeLabel.TextScaled = true
+TimeLabel.Font = Enum.Font.GothamBold
+TimeLabel.Text = "🕒 00:00:00"
+
+local PingLabel = Instance.new("TextLabel", StatsPanel)
+PingLabel.Size = UDim2.new(0.33, 0, 1, 0)
+PingLabel.Position = UDim2.new(0.67, 0, 0, 0)
+PingLabel.BackgroundTransparency = 1
+PingLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+PingLabel.TextScaled = true
+PingLabel.Font = Enum.Font.GothamBlack
+PingLabel.Text = "🌐 Ping: 0ms"
+
+-- ===== FOV Circle =====
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Radius = 100
+FOVCircle.Thickness = 1.8
+FOVCircle.Transparency = 0.35
+FOVCircle.Filled = false
+FOVCircle.Color = Color3.fromRGB(255, 85, 85)
+FOVCircle.Visible = false
+
+-- ===== Variables =====
+local espEnabled = true
+local AimbotOn = true
+local FOVRadius = 100
+local fpsPingVisible = true
+local AimPart = "Head"
+local highlightColor = Color3.fromRGB(255, 85, 85)
+local FreecamEnabled = false
+local ReconEnabled = false
+local ReconTarget = nil
+local ReconListVisible = false
+local FreecamSpeed = 45
+local ZoomSpeed = 8
+local MinFOV = 10
+local MaxFOV = 120
+local MouseSensitivity = 0.18
+local rightMouseDown = false
+local mouseDelta = Vector2.new()
+local SuperJumpEnabled = false
+local previousFOV = 70
+
+-- ===== Recon Player List Frame =====
+local ReconListFrame = Instance.new("ScrollingFrame", MainFrame)
+ReconListFrame.Size = UDim2.new(0.82, 0, 0.55, 0)
+ReconListFrame.Position = UDim2.new(0.09, 0, 0.38, 0)
+ReconListFrame.BackgroundTransparency = 1
+ReconListFrame.BorderSizePixel = 0
+ReconListFrame.ScrollBarThickness = 5
+ReconListFrame.CanvasSize = UDim2.new(0,0,0,0)
+ReconListFrame.Visible = false
+ReconListFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+
+local ReconListLayout = Instance.new("UIListLayout", ReconListFrame)
+ReconListLayout.Padding = UDim.new(0,7)
+ReconListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ReconListLayout.FillDirection = Enum.FillDirection.Vertical
+
+-- ===== NEW "WALO" BUTTON =====
+local WaloButton = Instance.new("TextButton", MainFrame)
+WaloButton.Name = "WaloButton"
+WaloButton.Size = UDim2.new(0.82, 0, 0.09, 0)
+WaloButton.Position = UDim2.new(0.09, 0, 0.04 + 7*0.11, 0)  -- 8th position
+WaloButton.BackgroundColor3 = Color3.fromRGB(38, 38, 48)
+WaloButton.Text = "Sooon..."
+WaloButton.TextColor3 = Color3.fromRGB(255, 215, 215)
+WaloButton.TextScaled = true
+WaloButton.Font = Enum.Font.GothamBlack
+Instance.new("UICorner", WaloButton).CornerRadius = UDim.new(0, 12)
+
+local wGrad = Instance.new("UIGradient", WaloButton)
+wGrad.Rotation = 90
+wGrad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 110, 110)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(120, 30, 30))
+}
+
+local wStroke = Instance.new("UIStroke", WaloButton)
+wStroke.Color = Color3.fromRGB(255, 140, 140)
+wStroke.Thickness = 1.4
+wStroke.Transparency = 0.55
+
+-- ===== ESP Functions =====
+local function createHighlight(char)
+    if char and not char:FindFirstChild("Hermano_Highlight") then
+        local hl = Instance.new("Highlight", char)
+        hl.Name = "Hermano_Highlight"
+        hl.FillTransparency = 0.92
+        hl.OutlineTransparency = 0
+        hl.OutlineColor = highlightColor
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.Adornee = char
+    end
+end
+
+local function removeHighlight(char)
+    if char then
+        local hl = char:FindFirstChild("Hermano_Highlight")
+        if hl then hl:Destroy() end
+    end
+end
+
+local function setupPlayer(plr)
+    if plr == Player then return end
+    if plr.Character then
+        createHighlight(plr.Character)
+    end
+    plr.CharacterAdded:Connect(function(char)
+        if espEnabled then
+            createHighlight(char)
+        end
+    end)
+    plr.CharacterRemoving:Connect(removeHighlight)
+end
+
+for _, plr in Players:GetPlayers() do
+    if espEnabled then
+        setupPlayer(plr)
+    end
+end
+
+Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(function(p)
+    removeHighlight(p.Character)
+end)
+
+-- ===== Aimbot Helpers =====
+local function IsVisible(part)
+    if not part or not part.Parent then return false end
+    local origin = Camera.CFrame.Position
+    local direction = (part.Position - origin)
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {Player.Character or {}, part.Parent}
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    local result = workspace:Raycast(origin, direction, params)
+    return result == nil
+end
+
+local function GetClosestPlayerToFOV()
+    local closest, minDist = nil, FOVRadius
+    local center = Camera.ViewportSize / 2
+    for _, plr in Players:GetPlayers() do
+        if plr ~= Player and plr.Character and plr.Character:FindFirstChild(AimPart) then
+            local part = plr.Character[AimPart]
+            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+            if onScreen then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                if dist < minDist and IsVisible(part) then
+                    minDist = dist
+                    closest = plr
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- ===== Recon Helpers =====
+local function updateReconList()
+    for _, child in ReconListFrame:GetChildren() do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    local count = 0
+    for _, plr in Players:GetPlayers() do
+        if plr ~= Player and plr.Character and plr.Character:FindFirstChild("Humanoid") then
+            count += 1
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -14, 0, 42)
+            btn.BackgroundColor3 = Color3.fromRGB(38, 38, 48)
+            btn.Text = plr.Name
+            btn.TextColor3 = Color3.fromRGB(255, 210, 210)
+            btn.Font = Enum.Font.GothamBlack
+            btn.TextScaled = true
+            btn.BackgroundTransparency = 0.35
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+           
+            local bStroke = Instance.new("UIStroke", btn)
+            bStroke.Color = Color3.fromRGB(255,100,100)
+            bStroke.Thickness = 1.2
+            bStroke.Transparency = 0.5
+           
+            btn.MouseButton1Click:Connect(function()
+                if ReconEnabled and ReconTarget == plr then
+                    ReconTarget = nil
+                    disableRecon()
+                else
+                    ReconEnabled = true
+                    ReconTarget = plr
+                    ReconToggle.Text = "RECON → " .. plr.Name
+                    AimbotOn = false
+                    FreecamEnabled = false
+                    FreecamToggle.Text = "Freecam: OFF"
+                end
+            end)
+           
+            btn.Parent = ReconListFrame
+        end
+    end
+    ReconListFrame.CanvasSize = UDim2.new(0,0,0, count * 49)
+end
+
+local function disableRecon()
+    ReconEnabled = false
+    ReconTarget = nil
+    ReconToggle.Text = "👥 Recon Player"
+    Camera.CameraType = Enum.CameraType.Custom
+    Camera.CameraSubject = Player.Character and Player.Character:FindFirstChildWhichIsA("Humanoid") or nil
+end
+
+-- ===== Super Jump =====
+local function onInputBegan(input, gameProcessed)
+    if gameProcessed then return end
+    if SuperJumpEnabled and input.KeyCode == Enum.KeyCode.Space then
+        local humanoid = Player.Character and Player.Character:FindFirstChildWhichIsA("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            task.wait()
+            humanoid:ChangeState(Enum.HumanoidStateType.Seated)
+        end
+    end
+end
+
+UserInputService.InputBegan:Connect(onInputBegan)
+
+-- ===== Freecam Input =====
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        rightMouseDown = true
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        rightMouseDown = false
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement and rightMouseDown and FreecamEnabled then
+        mouseDelta = input.Delta
+    end
+    if input.UserInputType == Enum.UserInputType.MouseWheel and FreecamEnabled then
+        local delta = input.Position.Z
+        local newFov = math.clamp(Camera.FieldOfView - delta * ZoomSpeed, MinFOV, MaxFOV)
+        Camera.FieldOfView = newFov
+    end
+end)
+
+-- ===== Main Render Loop =====
+local lastTime = tick()
+local fps = 0
+
+RunService.RenderStepped:Connect(function(dt)
+    -- Stats update
+    if fpsPingVisible then
+        fps += 1
+        if tick() - lastTime >= 1 then
+            FPSLabel.Text = "⚡ FPS: " .. fps
+            if fps >= 100 then FPSLabel.TextColor3 = Color3.fromRGB(0,255,100)
+            elseif fps >= 40 then FPSLabel.TextColor3 = Color3.fromRGB(255,200,60)
+            else FPSLabel.TextColor3 = Color3.fromRGB(255,60,60) end
+            fps = 0
+            lastTime = tick()
+        end
+        TimeLabel.Text = "🕒 " .. os.date("%H:%M:%S")
+        local ping = math.floor(Player:GetNetworkPing() * 1000 + 0.5)
+        PingLabel.Text = "🌐 " .. ping .. "ms"
+        if ping <= 80 then PingLabel.TextColor3 = Color3.fromRGB(0,255,100)
+        elseif ping <= 180 then PingLabel.TextColor3 = Color3.fromRGB(255,215,0)
+        else PingLabel.TextColor3 = Color3.fromRGB(220,60,60) end
+    end
+
+    FOVCircle.Position = Camera.ViewportSize / 2
+    FOVCircle.Radius = FOVRadius
+    FOVCircle.Visible = AimbotOn and not FreecamEnabled and not ReconEnabled
+
+    -- Aimbot
+    if AimbotOn and not FreecamEnabled and not ReconEnabled then
+        local tgt = GetClosestPlayerToFOV()
+        if tgt and tgt.Character and tgt.Character:FindFirstChild(AimPart) then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, tgt.Character[AimPart].Position)
+        end
+    end
+
+    -- Freecam movement
+    if FreecamEnabled then
+        Camera.CameraType = Enum.CameraType.Scriptable
+        if rightMouseDown and mouseDelta.Magnitude > 0 then
+            local yaw = -mouseDelta.X * MouseSensitivity
+            local pitch = -mouseDelta.Y * MouseSensitivity
+            local cf = Camera.CFrame
+            local newCf = cf * CFrame.Angles(0, math.rad(yaw), 0) * CFrame.Angles(math.rad(pitch), 0, 0)
+            local _, py, pz = newCf:ToEulerAnglesYXZ()
+            if math.abs(pz) > math.rad(89) then
+                newCf = cf * CFrame.Angles(0, math.rad(yaw), 0)
+            end
+            Camera.CFrame = newCf
+            mouseDelta = Vector2.new()
+        end
+
+        local moveDir = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.yAxis end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.yAxis end
+        
+        if moveDir.Magnitude > 0.01 then
+            local spd = FreecamSpeed
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then spd *= 3 end
+            local newPos = Camera.CFrame.Position + moveDir.Unit * spd * dt
+            Camera.CFrame = CFrame.new(newPos, newPos + Camera.CFrame.LookVector)
+        end
+    end
+
+    -- Recon camera follow
+    if ReconEnabled and ReconTarget and ReconTarget.Character and ReconTarget.Character:FindFirstChild("Humanoid") then
+        local hum = ReconTarget.Character.Humanoid
+        if hum.Health > 0 then
+            Camera.CameraType = Enum.CameraType.Follow
+            Camera.CameraSubject = hum
+        else
+            ReconTarget = nil
+            disableRecon()
+        end
+    end
+end)
+
+-- ===== GUI Buttons =====
+local ESPToggle       = Instance.new("TextButton", MainFrame)
+local AimbotToggle    = Instance.new("TextButton", MainFrame)
+local FOVBox          = Instance.new("TextBox", MainFrame)
+local StatsToggle     = Instance.new("TextButton", MainFrame)
+local FreecamToggle   = Instance.new("TextButton", MainFrame)
+local ReconToggle     = Instance.new("TextButton", MainFrame)
+local SuperJumpToggle = Instance.new("TextButton", MainFrame)
+
+local buttons = {ESPToggle, AimbotToggle, FOVBox, StatsToggle, FreecamToggle, ReconToggle, SuperJumpToggle, WaloButton}
+
+local labels  = {
+    "👁️ ESP: ON", 
+    "🔫 AIMBOT: ON", 
+    "🎯 FOV: 100", 
+    "📊 STATS: ON", 
+    "🎥 FREECAM: OFF", 
+    "👥 RECON", 
+    "🦘 SUPER JUMP: OFF",
+    "Walo"   -- New empty button
+}
+
+for i, btn in ipairs(buttons) do
+    btn.Size = UDim2.new(0.82, 0, 0.09, 0)
+    btn.Position = UDim2.new(0.09, 0, 0.04 + (i-1)*0.11, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(38, 38, 48)
+    btn.Text = labels[i]
+    btn.TextColor3 = Color3.fromRGB(255, 215, 215)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamBlack
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+   
+    if btn ~= WaloButton then
+        local grad = Instance.new("UIGradient", btn)
+        grad.Rotation = 90
+        grad.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 110, 110)),
+            ColorSequenceKeypoint.new(1.0, Color3.fromRGB(120, 30, 30))
+        }
+       
+        local strk = Instance.new("UIStroke", btn)
+        strk.Color = Color3.fromRGB(255, 140, 140)
+        strk.Thickness = 1.4
+        strk.Transparency = 0.55
+    end
+end
+
+-- ===== Button Logic =====
+ESPToggle.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    ESPToggle.Text = "👁️ ESP: " .. (espEnabled and "ON" or "OFF")
+    for _, p in Players:GetPlayers() do
+        if espEnabled then
+            setupPlayer(p)
+        else
+            removeHighlight(p.Character)
+        end
+    end
+end)
+
+AimbotToggle.MouseButton1Click:Connect(function()
+    AimbotOn = not AimbotOn
+    AimbotToggle.Text = "🔫 AIMBOT: " .. (AimbotOn and "ON" or "OFF")
+end)
+
+FOVBox.FocusLost:Connect(function()
+    local num = tonumber(FOVBox.Text:match("%d+"))
+    if num and num >= 30 and num <= 800 then
+        FOVRadius = num
+        FOVCircle.Radius = num
+        FOVBox.Text = "🎯 FOV: " .. num
+    else
+        FOVBox.Text = "🎯 FOV: " .. FOVRadius
+    end
+end)
+
+StatsToggle.MouseButton1Click:Connect(function()
+    fpsPingVisible = not fpsPingVisible
+    StatsPanel.Visible = fpsPingVisible
+    StatsToggle.Text = "📊 STATS: " .. (fpsPingVisible and "ON" or "OFF")
+end)
+
+FreecamToggle.MouseButton1Click:Connect(function()
+    FreecamEnabled = not FreecamEnabled
+    FreecamToggle.Text = "🎥 FREECAM: " .. (FreecamEnabled and "ON" or "OFF")
+    
+    if FreecamEnabled then
+        previousFOV = Camera.FieldOfView
+        Camera.FieldOfView = 70
+        AimbotOn = false
+        ReconEnabled = false
+        ReconTarget = nil
+        ReconToggle.Text = "👥 RECON"
+        AimbotToggle.Text = "🔫 AIMBOT: OFF"
+    else
+        Camera.CameraType = Enum.CameraType.Custom
+        Camera.CameraSubject = Player.Character and Player.Character:FindFirstChildWhichIsA("Humanoid") or nil
+        Camera.FieldOfView = previousFOV
+    end
+end)
+
+ReconToggle.MouseButton1Click:Connect(function()
+    ReconListVisible = not ReconListVisible
+    ReconListFrame.Visible = ReconListVisible
+    if ReconListVisible then
+        updateReconList()
+        ReconToggle.Text = "👥 SELECT PLAYER..."
+    else
+        if ReconEnabled then disableRecon() end
+        ReconToggle.Text = "👥 RECON"
+    end
+end)
+
+SuperJumpToggle.MouseButton1Click:Connect(function()
+    SuperJumpEnabled = not SuperJumpEnabled
+    SuperJumpToggle.Text = "🦘 SUPER JUMP: " .. (SuperJumpEnabled and "ON" or "OFF")
+end)
+
+-- Walo Button (currently does nothing - you can add your own function later)
+WaloButton.MouseButton1Click:Connect(function()
+    -- Walo = nothing for now
+    print("Walo button clicked!")
+    -- You can add any code here later
+end)
+
+-- ===== Main GUI Toggle =====
+local guiVisible = false
+
+ToggleButton.MouseButton1Click:Connect(function()
+    guiVisible = not guiVisible
+    MainFrame.Visible = guiVisible
+    ToggleButton.Text = guiVisible and "CLOSE" or "OPEN"
+    
+    local clickFlash = TweenService:Create(ToggleButton, TweenInfo.new(0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+        BackgroundColor3 = Color3.fromRGB(255, 140, 140)
+    })
+    clickFlash:Play()
+    clickFlash.Completed:Connect(function()
+        TweenService:Create(ToggleButton, TweenInfo.new(0.18), {
+            BackgroundColor3 = guiVisible and hoverColor or normalColor
+        }):Play()
+    end)
+end)
+
+-- ===== Player Info Labels =====
+local infoFolder = Instance.new("Folder", ScreenGui)
+infoFolder.Name = "PlayerInfoLabels"
+
+local function createInfoLabel(plr)
+    if plr == Player then return end
+   
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 220, 0, 42)
+    label.BackgroundTransparency = 1
+    label.RichText = true
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.TextColor3 = Color3.fromRGB(255,255,255)
+    label.Parent = infoFolder
+    label.Visible = false
+   
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        if not espEnabled or not plr.Parent then
+            label:Destroy()
+            connection:Disconnect()
+            return
+        end
+       
+        local char = plr.Character
+        if not char or not char:FindFirstChild("Humanoid") or not char:FindFirstChild("HumanoidRootPart") then
+            label.Visible = false
+            return
+        end
+       
+        local hum = char.Humanoid
+        local root = char.HumanoidRootPart
+        local hp = math.floor(hum.Health + 0.5)
+        local max = math.floor(hum.MaxHealth)
+        local headPos = root.Position + Vector3.new(0, 3.2, 0)
+       
+        local screenPos, onScreen = Camera:WorldToViewportPoint(headPos)
+        local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+       
+        if not myRoot then
+            label.Visible = false
+            return
+        end
+       
+        local dist = (root.Position - myRoot.Position).Magnitude
+       
+        if onScreen and dist < 5000 and hp > 0 then
+            label.Position = UDim2.new(0, screenPos.X - 110, 0, screenPos.Y - 60)
+            label.Text = string.format(
+                "<font color='#ffffff'>%s</font>\n<font color='#ff5555'>%d/%d</font> <font color='#ffff88'>%.0fm</font>",
+                plr.Name, hp, max, dist
+            )
+            label.Visible = true
+        else
+            label.Visible = false
+        end
+    end)
+end
+
+for _, p in Players:GetPlayers() do
+    createInfoLabel(p)
+end
+
+Players.PlayerAdded:Connect(createInfoLabel)
+
+-- ===== Drag Toggle Button =====
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    ToggleButton.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+ToggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleButton.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+ToggleButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+print("Hermano Panel loaded | Weapon ESP Removed | Walo Button Added")
