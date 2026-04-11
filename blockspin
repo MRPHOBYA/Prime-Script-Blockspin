@@ -4,6 +4,7 @@ local AllowedUsers = {
     ["b5sx1"] = "User",    -- Sahbak (Member)
     ["dhydratatio"] = "User",    -- Sahbak (Member)
     ["deglem9wd"] = "User",    -- Sahbak (Member)
+    ["imranepapapapa"] = "User",    -- Sahbak (Member)
 }
 
 local Player = game:GetService("Players").LocalPlayer
